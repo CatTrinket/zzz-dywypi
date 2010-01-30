@@ -1,0 +1,6 @@
+# usual cruft
+.*.sw*
+*.bak
+
+conf/users.conf
+logs/*
