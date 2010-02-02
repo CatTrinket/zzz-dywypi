@@ -29,6 +29,7 @@
 
 ###
 
+import supybot.conf as conf
 import supybot.utils as utils
 from supybot.commands import *
 import supybot.plugins as plugins
@@ -46,6 +47,10 @@ class Pokedex(callbacks.Plugin):
         self.__parent = super(Pokedex, self)
         self.__parent.__init__(irc)
         self.db = pokedex.db.connect(self.registryValue('databaseURL'))
+        self.indices = pokedex.lookup.open_index(
+            directory=conf.supybot.directories.data.dirize('pokedex-index'),
+            session=self.db,
+        )
 
     def pokedex(self, irc, msg, args, thing):
         """<thing...>
@@ -53,7 +58,8 @@ class Pokedex(callbacks.Plugin):
         Looks up <thing> in the veekun Pokédex."""
 
         # Similar logic to the site, here.
-        results = pokedex.lookup.lookup(thing, session=self.db)
+        results = pokedex.lookup.lookup(thing, session=self.db,
+                indices=self.indices)
 
         # Nothing found
         if len(results) == 0:
