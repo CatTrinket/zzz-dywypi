@@ -6,4 +6,5 @@
 dywypi.pid
 conf/users.conf
 backup/*
+data/*
 logs/*
