@@ -1,3 +1,4 @@
+# encoding: utf8
 ###
 # Copyright (c) 2010, Alex Munroe
 # All rights reserved.
@@ -34,11 +35,95 @@ import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
 
+import pokedex.db
+import pokedex.db.tables as tables
+import pokedex.lookup
 
 class Pokedex(callbacks.Plugin):
     """Add the help for "@plugin help Pokedex" here
     This should describe *how* to use this plugin."""
-    pass
+    def __init__(self, irc):
+        self.__parent = super(Pokedex, self)
+        self.__parent.__init__(irc)
+        self.db = pokedex.db.connect(self.registryValue('databaseURL'))
+
+    def pokedex(self, irc, msg, args, thing):
+        """<thing...>
+
+        Looks up <thing> in the veekun Pokédex."""
+
+        # Similar logic to the site, here.
+        results = pokedex.lookup.lookup(thing, session=self.db)
+
+        # Nothing found
+        if len(results) == 0:
+            irc.reply("I don't know what that is.")
+            return
+
+        # Multiple matches; propose them all
+        if len(results) > 1:
+            if results[0].exact:
+                reply = "Are you looking for"
+            else:
+                reply = "Did you mean"
+
+            # For exact name matches with multiple results, use type prefixes
+            # (item:Metronome).  For anything else, omit them
+            use_prefixes = (results[0].exact
+                            and '*' not in thing
+                            and '?' not in thing)
+
+            result_strings = []
+            for result in results:
+                result_string = result.name
+                if use_prefixes:
+                    # Table classes know their singular names
+                    prefix = result.object.__singlename__
+                    result_string = prefix + ':' + result_string
+                result_strings.append(result_string)
+
+            irc.reply("{0}: {1}?".format(reply, '; '.join(result_strings)))
+            return
+
+        # If we got here, there's an exact match; hurrah!
+        result = results[0]
+        if isinstance(result.object, tables.Pokemon):
+            irc.reply("""{name}, {type}-type Pokémon.""".format(
+                name=result.object.name,
+                type='/'.join(_.name for _ in result.object.types),
+                )
+            )
+
+        elif isinstance(result.object, tables.Move):
+            irc.reply("""{name}, {type}-type move.""".format(
+                name=result.object.name,
+                type=result.object.type.name,
+                )
+            )
+
+        elif isinstance(result.object, tables.Type):
+            irc.reply("""{name}, a type.""".format(
+                name=result.object.name,
+                )
+            )
+
+        elif isinstance(result.object, tables.Item):
+            irc.reply("""{name}, an item.""".format(
+                name=result.object.name,
+                )
+            )
+
+        elif isinstance(result.object, tables.Ability):
+            irc.reply("""{name}, an ability.""".format(
+                name=result.object.name,
+                )
+            )
+
+        else:
+            # This can only happen if lookup.py is upgraded and we are not
+            irc.reply("Uhh..  I found that, but I don't know what it is.  :(")
+
+    pokedex = wrap(pokedex, [rest('something')])
 
 
 Class = Pokedex

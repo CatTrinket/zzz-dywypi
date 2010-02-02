@@ -1,3 +1,4 @@
+# encoding: utf8
 ###
 # Copyright (c) 2010, Alex Munroe
 # All rights reserved.
@@ -41,9 +42,9 @@ def configure(advanced):
 
 
 Pokedex = conf.registerPlugin('Pokedex')
-# This is where your configuration variables (if any) should go.  For example:
-# conf.registerGlobalValue(Pokedex, 'someConfigVariableName',
-#     registry.Boolean(False, """Help for someConfigVariableName."""))
 
+conf.registerGlobalValue(Pokedex, 'databaseURL',
+    registry.String('', """SQLAlchemy-compatible URL to the pokedex
+    database."""))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
