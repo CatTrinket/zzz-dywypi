@@ -1,6 +1,9 @@
 # usual cruft
 .*.sw*
 *.bak
+*.pyc
 
+dywypi.pid
 conf/users.conf
+backup/*
 logs/*
