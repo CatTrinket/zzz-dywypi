@@ -57,13 +57,21 @@ class Pokedex(callbacks.Plugin):
 
         Looks up <thing> in the veekun Pokédex."""
 
+        # Fix encoding.  Sigh.
+        if not isinstance(thing, unicode):
+            ascii_thing = thing
+            try:
+                thing = ascii_thing.decode('utf8')
+            except UnicodeDecodeError:
+                thing = ascii_thing.decode('latin1')
+
         # Similar logic to the site, here.
         results = pokedex.lookup.lookup(thing, session=self.db,
                 indices=self.indices)
 
         # Nothing found
         if len(results) == 0:
-            irc.reply("I don't know what that is.")
+            self._reply(irc, "I don't know what that is.")
             return
 
         # Multiple matches; propose them all
@@ -88,48 +96,55 @@ class Pokedex(callbacks.Plugin):
                     result_string = prefix + ':' + result_string
                 result_strings.append(result_string)
 
-            irc.reply("{0}: {1}?".format(reply, '; '.join(result_strings)))
+            self._reply(irc, u"{0}: {1}?".format(reply, '; '.join(result_strings)))
             return
 
         # If we got here, there's an exact match; hurrah!
         result = results[0]
         if isinstance(result.object, tables.Pokemon):
-            irc.reply("""{name}, {type}-type Pokémon.""".format(
+            self._reply(irc, u"""{name}, {type}-type Pokémon.""".format(
                 name=result.object.name,
                 type='/'.join(_.name for _ in result.object.types),
                 )
             )
 
         elif isinstance(result.object, tables.Move):
-            irc.reply("""{name}, {type}-type move.""".format(
+            self._reply(irc, u"""{name}, {type}-type move.""".format(
                 name=result.object.name,
                 type=result.object.type.name,
                 )
             )
 
         elif isinstance(result.object, tables.Type):
-            irc.reply("""{name}, a type.""".format(
+            self._reply(irc, u"""{name}, a type.""".format(
                 name=result.object.name,
                 )
             )
 
         elif isinstance(result.object, tables.Item):
-            irc.reply("""{name}, an item.""".format(
+            self._reply(irc, u"""{name}, an item.""".format(
                 name=result.object.name,
                 )
             )
 
         elif isinstance(result.object, tables.Ability):
-            irc.reply("""{name}, an ability.""".format(
+            self._reply(irc, u"""{name}, an ability.""".format(
                 name=result.object.name,
                 )
             )
 
         else:
             # This can only happen if lookup.py is upgraded and we are not
-            irc.reply("Uhh..  I found that, but I don't know what it is.  :(")
+            self._reply(irc, "Uhh..  I found that, but I don't know what it is.  :(")
 
     pokedex = wrap(pokedex, [rest('something')])
+
+    def _reply(self, irc, response):
+        """Wraps irc.reply() to do some Unicode decoding."""
+        if isinstance(response, str):
+            irc.reply(response)
+        else:
+            irc.reply(response.encode('utf8'))
 
 
 Class = Pokedex
