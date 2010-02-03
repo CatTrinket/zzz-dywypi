@@ -119,7 +119,7 @@ def parse_livelog(line):
         data[key] = val
 
     return data
-    
+
 def livelog_announcement(livelog):
     # achievement gained
     if 'achieve_diff' in livelog:
@@ -181,8 +181,12 @@ class NetHack(callbacks.Plugin):
         self.xlog.seek(0, os.SEEK_END)
         self.livelog.seek(0, os.SEEK_END)
 
-        # Remove the event first, in case this is a reload
-        schedule.removePeriodicEvent('nethack-log-ping')
+        # Remove the event first, in case this is a reload.  This will fail if
+        # this is the first load, so throw it in a try
+        try:
+            schedule.removePeriodicEvent('nethack-log-ping')
+        except:
+            pass
 
         def callback():
             self._checkLogs(irc)
