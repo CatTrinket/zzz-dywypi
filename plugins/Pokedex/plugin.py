@@ -89,11 +89,19 @@ class Pokedex(callbacks.Plugin):
 
             result_strings = []
             for result in results:
-                result_string = result.name
+                result_string = result.object.name
+
+                # Prepend, e.g., pokemon: if necessary
                 if use_prefixes:
                     # Table classes know their singular names
                     prefix = result.object.__singlename__
                     result_string = prefix + ':' + result_string
+
+                # Identify foreign language names
+                if result.language:
+                    result_string += u""" ({0}: {1})""".format(
+                        result.iso3166, result.name)
+
                 result_strings.append(result_string)
 
             self._reply(irc, u"{0}: {1}?".format(reply, '; '.join(result_strings)))
