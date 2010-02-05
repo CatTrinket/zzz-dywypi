@@ -162,8 +162,8 @@ def livelog_announcement(livelog):
 
 report_template = "{name} ({role} {race} {gender_delta} {align_delta}): " \
                   "{death} on {level_desc}.  {points} points in {turns} turns, " \
-                  "wasting {realtime_pretty}.  {dumplog}"
-
+                  "wasting {realtime_pretty}.  " \
+                  "http://nethack.veekun.com/players/{name}/games/{endtime}"
 
 CONFIG_PLAYGROUND = '/opt/nethack.veekun.com/nethack/var'
 CONFIG_USERDATA_FILE = '/opt/nethack.veekun.com/dgldir/userdata'
@@ -204,26 +204,7 @@ class NetHack(callbacks.Plugin):
         line = self.xlog.readline()
         if line:
             data = parse_xlog(line)
-
-            # Find dumplog
-            dumplog_paths = glob(
-                os.path.join(CONFIG_USERDATA_FILE,
-                             data['name'],
-                             'dumplog',
-                             data['starttime'])
-                + '*'
-            )
-            if dumplog_paths:
-                (_, dumplog_file) = os.path.split(dumplog_paths[0])
-                dumplog_url = '{base}/{name}/dumplog/{file}'.format(
-                    base=CONFIG_USERDATA_WEB,
-                    name=data['name'],
-                    file=dumplog_file,
-                )
-            else:
-                dumplog_url = "Can't find dumplog  :("
-
-            report = report_template.format(dumplog=dumplog_url, **data)
+            report = report_template.format(**data)
             msg = ircmsgs.privmsg(CONFIG_CHANNEL, report)
             irc.queueMsg(msg)
 
