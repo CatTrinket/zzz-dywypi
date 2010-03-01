@@ -109,35 +109,52 @@ class Pokedex(callbacks.Plugin):
 
         # If we got here, there's an exact match; hurrah!
         result = results[0]
-        if isinstance(result.object, tables.Pokemon):
-            self._reply(irc, u"""{name}, {type}-type Pokémon.""".format(
-                name=result.object.name,
-                type='/'.join(_.name for _ in result.object.types),
+        obj = result.object
+        if isinstance(obj, tables.Pokemon):
+            reply_template = \
+                u"""#{id} {name}, {type}-type Pokémon.  Has {abilities}.  """ \
+                """Is {stats}."""
+            self._reply(irc, reply_template.format(
+                id=obj.id,
+                name=obj.name,
+                type='/'.join(_.name for _ in obj.types),
+                abilities=' or '.join(_.name for _ in obj.abilities),
+                stats='/'.join(str(_.base_stat) for _ in obj.stats),
                 )
             )
 
-        elif isinstance(result.object, tables.Move):
-            self._reply(irc, u"""{name}, {type}-type move.""".format(
-                name=result.object.name,
-                type=result.object.type.name,
+        elif isinstance(obj, tables.Move):
+            reply_template = \
+                u"""{name}, {type}-type {damage_class} move.  """ \
+                """{power} power; {accuracy}% accuracy; {pp} PP.  """ \
+                """{effect}"""
+            self._reply(irc, reply_template.format(
+                name=obj.name,
+                type=obj.type.name,
+                damage_class=obj.damage_class.name,
+                power=obj.power,
+                accuracy=obj.accuracy,
+                pp=obj.pp,
+                effect=unicode(obj.short_effect.as_html),
                 )
             )
 
-        elif isinstance(result.object, tables.Type):
+        elif isinstance(obj, tables.Type):
             self._reply(irc, u"""{name}, a type.""".format(
-                name=result.object.name,
+                name=obj.name,
                 )
             )
 
-        elif isinstance(result.object, tables.Item):
+        elif isinstance(obj, tables.Item):
             self._reply(irc, u"""{name}, an item.""".format(
-                name=result.object.name,
+                name=obj.name,
                 )
             )
 
-        elif isinstance(result.object, tables.Ability):
-            self._reply(irc, u"""{name}, an ability.""".format(
-                name=result.object.name,
+        elif isinstance(obj, tables.Ability):
+            self._reply(irc, u"""{name}, an ability.  {effect}""".format(
+                name=obj.name,
+                effect=obj.effect,
                 )
             )
 
