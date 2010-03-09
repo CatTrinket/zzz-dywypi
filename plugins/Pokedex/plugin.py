@@ -153,7 +153,7 @@ class Pokedex(callbacks.Plugin):
                 u"""{name}, {type}-type {damage_class} move.  """ \
                 """{power} power; {accuracy}% accuracy; {pp} PP.  """ \
                 """{effect}  """ \
-                """http://beta.veekun.com/dex/moves/{link_name}"""
+                """http://veekun.com/dex/moves/{link_name}"""
             self._reply(irc, reply_template.format(
                 name=obj.name,
                 type=obj.type.name,
@@ -174,14 +174,20 @@ class Pokedex(callbacks.Plugin):
             )
 
         elif isinstance(obj, tables.Item):
-            self._reply(irc, u"""{name}, an item.  http://beta.veekun.com/dex/items/{link_name}""".format(
+            reply_template = \
+                u"""{name}, an item.  """ \
+                """http://veekun.com/dex/abilities/{link_name}"""
+            self._reply(irc, reply_template.format(
                 name=obj.name,
                 link_name=urllib.quote(obj.name.lower()),
                 )
             )
 
         elif isinstance(obj, tables.Ability):
-            self._reply(irc, u"""{name}, an ability.  {effect}  http://beta.veekun.com/dex/abilities/{link_name}""".format(
+            reply_template = \
+                u"""{name}, an ability.  {effect}  """ \
+                """http://veekun.com/dex/abilities/{link_name}"""
+            self._reply(irc, reply_template.format(
                 name=obj.name,
                 effect=obj.effect,
                 link_name=urllib.quote(obj.name.lower()),
