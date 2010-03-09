@@ -167,9 +167,45 @@ class Pokedex(callbacks.Plugin):
             )
 
         elif isinstance(obj, tables.Type):
-            self._reply(irc, u"""{name}, a type.  http://beta.veekun.com/dex/types/{link_name}""".format(
-                name=obj.name,
-                link_name=urllib.quote(obj.name.lower()),
+            reply_template = u"""{name}, a type.  """
+
+            reply_factors = { 200: u'2', 50: u'½', 0: u'0' }
+
+            offensive_modifiers = {}
+            for matchup in obj.damage_efficacies:
+                if matchup.damage_factor != 100:
+                    offensive_modifiers.setdefault(matchup.damage_factor, []) \
+                        .append(matchup.target_type.name)
+            if offensive_modifiers:
+                reply_template += u"""{offensive_modifiers}.  """
+                for factor in offensive_modifiers:
+                    offensive_modifiers[factor] = u'{factor}× against {types}'.format(
+                        factor=reply_factors[factor],
+                        types=', '.join(sorted(offensive_modifiers[factor]))
+                    )
+
+            defensive_modifiers = {}
+            for matchup in obj.target_efficacies:
+                if matchup.damage_factor != 100:
+                    defensive_modifiers.setdefault(matchup.damage_factor, []) \
+                        .append(matchup.damage_type.name)
+            if defensive_modifiers:
+                reply_template += u"""{defensive_modifiers}.  """
+                for factor in defensive_modifiers:
+                    defensive_modifiers[factor] = u'{factor}× from {types}'.format(
+                        factor=reply_factors[factor],
+                        types=', '.join(sorted(defensive_modifiers[factor]))
+                    )
+
+            reply_template += u"""http://veekun.com/dex/types/{link_name}"""
+
+            self._reply(irc, reply_template.format(
+                name=obj.name.capitalize(),
+                offensive_modifiers='; '.join(offensive_modifiers[_]
+                                              for _ in sorted(offensive_modifiers)),
+                defensive_modifiers='; '.join(defensive_modifiers[_]
+                                              for _ in sorted(defensive_modifiers)),
+                link_name=urllib.quote(obj.name.lower().encode('utf8')),
                 )
             )
 
