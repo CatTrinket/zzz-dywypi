@@ -116,14 +116,35 @@ class Pokedex(callbacks.Plugin):
             reply_template = \
                 u"""#{id} {name}, {type}-type Pokémon.  Has {abilities}.  """ \
                 """Is {stats}.  """ \
-                """http://beta.veekun.com/dex/pokemon/{link_name}"""
+                """http://veekun.com/dex/pokemon/{link_name}"""
+
+            if obj.forme_name:
+                name = '{form} {name}'.format(
+                    form=obj.forme_name.title(),
+                    name=obj.name
+                )
+            else:
+                name = obj.name
+
+            if obj.forme_base_pokemon:
+                # Can't use urllib.quote() on the whole thing or it'll
+                # catch "?" and "=" where it shouldn't.
+                # XXX Also we need to pass urllib.quote() things explicitly
+                #     encoded as utf8 or else we get a UnicodeEncodeError.
+                link_name = '{name}?form={form}'.format(
+                    name=urllib.quote(obj.name.lower().encode('utf8')),
+                    form=urllib.quote(obj.forme_name.lower().encode('utf8')),
+                )
+            else:
+                link_name = urllib.quote(obj.name.lower().encode('utf8'))
+
             self._reply(irc, reply_template.format(
-                id=obj.id,
-                name=obj.name,
+                id=obj.national_id,
+                name=name,
                 type='/'.join(_.name for _ in obj.types),
                 abilities=' or '.join(_.name for _ in obj.abilities),
                 stats='/'.join(str(_.base_stat) for _ in obj.stats),
-                link_name=urllib.quote(obj.name.lower()),
+                link_name=link_name,
                 )
             )
 
