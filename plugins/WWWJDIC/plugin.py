@@ -1,0 +1,117 @@
+###
+# Copyright (c) 2010, Alex Munroe
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#   * Redistributions of source code must retain the above copyright notice,
+#     this list of conditions, and the following disclaimer.
+#   * Redistributions in binary form must reproduce the above copyright notice,
+#     this list of conditions, and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#   * Neither the name of the author of this software nor the name of
+#     contributors to this software may be used to endorse or promote products
+#     derived from this software without specific prior written consent.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+###
+
+import supybot.utils as utils
+from supybot.commands import *
+import supybot.plugins as plugins
+import supybot.ircutils as ircutils
+import supybot.callbacks as callbacks
+
+import urllib
+import urllib2
+from BeautifulSoup import BeautifulSoup, NavigableString
+
+
+class WWWJDIC(callbacks.Plugin):
+    """Add the help for "@plugin help WWWJDIC" here
+    This should describe *how* to use this plugin."""
+    threaded = True
+
+    def jdic(self, irc, msg, args, thing):
+        """<thing...>
+
+        Looks up <thing> in the EDICT Japanese dictionary.
+        To use roomaji, prefix with @ for hiragana or # for katakana."""
+
+        # Fix encoding.  Sigh.  Stolen from Pokedex.plugin.
+        if not isinstance(thing, unicode):
+            ascii_thing = thing
+            try:
+                thing = ascii_thing.decode('utf8')
+            except UnicodeDecodeError:
+                thing = ascii_thing.decode('latin1')
+
+
+        # Unnngh this is horrendous.  urllib doesn't understand unicode at all;
+        # manually encode as bytes and then urlencode
+        url_thing = urllib.quote(thing.encode('utf8'))
+
+        # Hit up wwwjdic
+        # 1 = edict; Z = raw results; U = utf8 input; R = exact + common
+        res = urllib2.urlopen(
+            u"http://www.csse.monash.edu.au/~jwb/cgi-bin/wwwjdic.cgi?1ZUR"
+            + url_thing
+        )
+
+        # Even the raw results come wrapped in minimal HTML.  This sucks.
+        # They're just in this form though:
+        # <p>
+        # <br>entry 1
+        # <br>entry 2
+        # So grab everything from that paragraph that isn't a tag (<br>) or
+        # blank space and spit it back out.
+        soup = BeautifulSoup(res)
+        thing_ct = 0
+        for thing in soup.p:
+            if not isinstance(thing, NavigableString):
+                continue
+
+            # Everything ends with a newline, bleh!
+            entry = unicode(thing).strip()
+            if entry == '':
+                continue
+
+            self._reply(irc, entry)
+
+            # Don't send back more than three; that's probably plenty
+            thing_ct += 1
+            if thing_ct >= 3:
+                break
+
+    jdic = wrap(jdic, [rest('something')])
+
+
+    def _reply(self, irc, response):
+        """Wraps irc.reply() to do some Unicode decoding.
+
+        Also stolen from Pokedex.plugin.
+        """
+        if isinstance(response, str):
+            irc.reply(response)
+        else:
+            irc.reply(response.encode('utf8'))
+
+
+
+
+Class = WWWJDIC
+
+
+# vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:
