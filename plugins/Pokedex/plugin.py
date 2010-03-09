@@ -162,7 +162,7 @@ class Pokedex(callbacks.Plugin):
                 accuracy=obj.accuracy,
                 pp=obj.pp,
                 effect=unicode(obj.short_effect.as_html),
-                link_name=urllib.quote(obj.name.lower()),
+                link_name=urllib.quote(obj.name.lower().encode('utf8')),
                 )
             )
 
@@ -215,7 +215,7 @@ class Pokedex(callbacks.Plugin):
                 """http://veekun.com/dex/abilities/{link_name}"""
             self._reply(irc, reply_template.format(
                 name=obj.name,
-                link_name=urllib.quote(obj.name.lower()),
+                link_name=urllib.quote(obj.name.lower().encode('utf8')),
                 )
             )
 
@@ -226,7 +226,7 @@ class Pokedex(callbacks.Plugin):
             self._reply(irc, reply_template.format(
                 name=obj.name,
                 effect=obj.effect,
-                link_name=urllib.quote(obj.name.lower()),
+                link_name=urllib.quote(obj.name.lower().encode('utf8')),
                 )
             )
 
