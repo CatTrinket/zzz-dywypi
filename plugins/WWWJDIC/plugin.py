@@ -72,19 +72,15 @@ class WWWJDIC(callbacks.Plugin):
 
         # Even the raw results come wrapped in minimal HTML.  This sucks.
         # They're just in this form though:
-        # <p>
-        # <br>entry 1
-        # <br>entry 2
-        # So grab everything from that paragraph that isn't a tag (<br>) or
-        # blank space and spit it back out.
+        # <pre>
+        # entry 1
+        # entry 2
+        # So grab everything from that pre tag, split by lines, and spit it
+        # back out.
         soup = BeautifulSoup(res)
         thing_ct = 0
-        for thing in soup.p:
-            if not isinstance(thing, NavigableString):
-                continue
-
-            # Everything ends with a newline, bleh!
-            entry = unicode(thing).strip()
+        for entry in soup.pre.string.splitlines():
+            entry = entry.strip()
             if entry == '':
                 continue
 
