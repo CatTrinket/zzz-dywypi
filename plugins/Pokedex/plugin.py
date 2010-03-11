@@ -115,7 +115,7 @@ class Pokedex(callbacks.Plugin):
         if isinstance(obj, tables.Pokemon):
             reply_template = \
                 u"""#{id} {name}, {type}-type Pokémon.  Has {abilities}.  """ \
-                """Is {stats}.  """ \
+                """Stats are {stats}, total {total}.  """ \
                 """http://veekun.com/dex/pokemon/{link_name}"""
 
             if obj.forme_name:
@@ -144,6 +144,7 @@ class Pokedex(callbacks.Plugin):
                 type='/'.join(_.name for _ in obj.types),
                 abilities=' or '.join(_.name for _ in obj.abilities),
                 stats='/'.join(str(_.base_stat) for _ in obj.stats),
+                total=sum(_.base_stat for _ in obj.stats),
                 link_name=link_name,
                 )
             )
