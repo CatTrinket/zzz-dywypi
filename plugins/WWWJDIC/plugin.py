@@ -78,6 +78,24 @@ class WWWJDIC(callbacks.Plugin):
         # So grab everything from that pre tag, split by lines, and spit it
         # back out.
         soup = BeautifulSoup(res)
+        if not soup.pre:
+            # Nothing found?
+            reply = u"Hmm, nothing found -- but I only look for exact " \
+                "matches and common words.  Try denshi jisho directly: "
+
+            jisho_url = u"http://jisho.org/words?jap={jap}&eng={eng}&dict=edict"
+            if thing[0] in ('@', '#'):
+                # Prefixes for roomaji
+                reply += jisho_url.format(jap=thing[1:], eng=u'')
+            # wtf why is any() overridden
+            elif filter(lambda c: ord(c) > 256, thing):
+                reply += jisho_url.format(jap=thing, eng=u'')
+            else:
+                reply += jisho_url.format(jap=u'', eng=thing)
+
+            self._reply(irc, reply)
+            return
+
         thing_ct = 0
         for entry in soup.pre.string.splitlines():
             entry = entry.strip()
