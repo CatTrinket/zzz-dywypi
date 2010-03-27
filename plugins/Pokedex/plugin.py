@@ -162,7 +162,7 @@ class Pokedex(callbacks.Plugin):
                 power=obj.power,
                 accuracy=obj.accuracy,
                 pp=obj.pp,
-                effect=unicode(obj.short_effect.as_html),
+                effect=unicode(obj.short_effect.as_text),
                 link_name=urllib.quote(obj.name.lower().encode('utf8')),
                 )
             )
