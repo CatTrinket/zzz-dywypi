@@ -206,7 +206,11 @@ class Pokedex(callbacks.Plugin):
         elif isinstance(obj, tables.Type):
             reply_template = u"""{name}, a type.  """
 
-            reply_factors = { 200: u'2', 50: u'½', 0: u'0' }
+            offensive_reply_factors = {
+                200: u'\x03092×\x0f',
+                50:  u'\x0304½×\x0f',
+                0:   u'\x03140×\x0f',
+            }
 
             offensive_modifiers = {}
             for matchup in obj.damage_efficacies:
@@ -216,10 +220,16 @@ class Pokedex(callbacks.Plugin):
             if offensive_modifiers:
                 reply_template += u"""{offensive_modifiers}.  """
                 for factor in offensive_modifiers:
-                    offensive_modifiers[factor] = u'{factor}× against {types}'.format(
-                        factor=reply_factors[factor],
+                    offensive_modifiers[factor] = u'{factor} against {types}'.format(
+                        factor=offensive_reply_factors[factor],
                         types=', '.join(sorted(offensive_modifiers[factor]))
                     )
+
+            defensive_reply_factors = {
+                200: u'\x03042×\x0f',
+                50:  u'\x0309½×\x0f',
+                0:   u'\x03110×\x0f',
+            }
 
             defensive_modifiers = {}
             for matchup in obj.target_efficacies:
@@ -229,8 +239,8 @@ class Pokedex(callbacks.Plugin):
             if defensive_modifiers:
                 reply_template += u"""{defensive_modifiers}.  """
                 for factor in defensive_modifiers:
-                    defensive_modifiers[factor] = u'{factor}× from {types}'.format(
-                        factor=reply_factors[factor],
+                    defensive_modifiers[factor] = u'{factor} from {types}'.format(
+                        factor=defensive_reply_factors[factor],
                         types=', '.join(sorted(defensive_modifiers[factor]))
                     )
 
