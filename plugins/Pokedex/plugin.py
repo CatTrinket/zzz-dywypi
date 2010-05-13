@@ -67,7 +67,7 @@ class Pokedex(callbacks.Plugin):
         self.__parent = super(Pokedex, self)
         self.__parent.__init__(irc)
         self.db = pokedex.db.connect(self.registryValue('databaseURL'))
-        self.indices = pokedex.lookup.open_index(
+        self.lookup = pokedex.lookup.PokedexLookup(
             directory=conf.supybot.directories.data.dirize('pokedex-index'),
             session=self.db,
         )
@@ -86,8 +86,7 @@ class Pokedex(callbacks.Plugin):
                 thing = ascii_thing.decode('latin1')
 
         # Similar logic to the site, here.
-        results = pokedex.lookup.lookup(thing, session=self.db,
-                indices=self.indices)
+        results = self.lookup.lookup(thing)
 
         # Nothing found
         if len(results) == 0:
