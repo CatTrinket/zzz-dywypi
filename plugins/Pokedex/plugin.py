@@ -271,7 +271,20 @@ class Pokedex(callbacks.Plugin):
                 """http://veekun.com/dex/abilities/{link_name}"""
             self._reply(irc, reply_template.format(
                 name=obj.name,
-                effect=obj.effect,
+                effect=obj.short_effect.as_text,
+                link_name=urllib.quote(obj.name.lower().encode('utf8')),
+                )
+            )
+
+        elif isinstance(obj, tables.Nature):
+            reply_template = \
+                u"""{name}, a nature.  """ \
+                u"""Raises \x0303{up}\x0f, lowers \x0304{down}\x0f.  """ \
+                u"""http://veekun.com/dex/natures/{link_name}"""
+            self._reply(irc, reply_template.format(
+                name=obj.name,
+                up=obj.increased_stat.name,
+                down=obj.decreased_stat.name,
                 link_name=urllib.quote(obj.name.lower().encode('utf8')),
                 )
             )
