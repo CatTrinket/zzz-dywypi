@@ -172,7 +172,7 @@ class Pokedex(callbacks.Plugin):
                 get_stat_color(stat_total / 6),
                 stat_total,
             )
-            stats = """{0} HP, {1}/{2} phys, {3}/{4} spec, {5} speed, {total} total""" \
+            stats = """{0} HP, {1}/{2} phys, {3}/{4} spec, {5} speed; {total} total""" \
                 .format(*colored_stats, total=colored_stat_total)
             self._reply(irc, reply_template.format(
                 id=obj.national_id,
