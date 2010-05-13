@@ -258,9 +258,10 @@ class Pokedex(callbacks.Plugin):
         elif isinstance(obj, tables.Item):
             reply_template = \
                 u"""{name}, an item.  """ \
-                """http://veekun.com/dex/items/{link_name}"""
+                """http://veekun.com/dex/items/{link_pocket}/{link_name}"""
             self._reply(irc, reply_template.format(
                 name=obj.name,
+                link_pocket=urllib.quote(obj.pocket.name.lower().encode('utf8')),
                 link_name=urllib.quote(obj.name.lower().encode('utf8')),
                 )
             )
