@@ -42,6 +42,24 @@ import pokedex.lookup
 
 import urllib
 
+
+def get_stat_color(stat):
+    if stat < 41:
+        return 4  # red
+    elif stat < 52:
+        return 7  # orange
+    elif stat < 61:
+        return 8  # yellow
+    elif stat < 71:
+        return 9  # green
+    elif stat < 85:
+        return 11  # cyan
+    elif stat < 100:
+        return 12  # blue
+    else:
+        return 13  # purple
+
+
 class Pokedex(callbacks.Plugin):
     """Add the help for "@plugin help Pokedex" here
     This should describe *how* to use this plugin."""
@@ -115,7 +133,7 @@ class Pokedex(callbacks.Plugin):
         if isinstance(obj, tables.Pokemon):
             reply_template = \
                 u"""#{id} {name}, {type}-type Pokémon.  Has {abilities}.  """ \
-                """Stats are {stats}, total {total}.  """ \
+                """{stats}.  """ \
                 """http://veekun.com/dex/pokemon/{link_name}"""
 
             if obj.forme_name:
@@ -138,13 +156,31 @@ class Pokedex(callbacks.Plugin):
             else:
                 link_name = urllib.quote(obj.name.lower().encode('utf8'))
 
+            # a/b/c/d/e/f sucks.  Put stats in a more readable format.
+            # Also, color-code them by good-osity.
+            colored_stats = []
+            stat_total = 0
+            for pokemon_stat in obj.stats:
+                base_stat = pokemon_stat.base_stat
+                stat_total += base_stat
+                color = get_stat_color(base_stat)
+
+                colored_stats.append(
+                    "\x03{0:02d}{1}\x0f".format(color, base_stat)
+                )
+
+            colored_stat_total = "\x03{0:02d}{1}\x0f".format(
+                get_stat_color(stat_total / 6),
+                stat_total,
+            )
+            stats = """{0} HP, {1}/{2} phys, {3}/{4} spec, {5} speed, {total} total""" \
+                .format(*colored_stats, total=colored_stat_total)
             self._reply(irc, reply_template.format(
                 id=obj.national_id,
                 name=name,
                 type='/'.join(_.name for _ in obj.types),
                 abilities=' or '.join(_.name for _ in obj.abilities),
-                stats='/'.join(str(_.base_stat) for _ in obj.stats),
-                total=sum(_.base_stat for _ in obj.stats),
+                stats=stats,
                 link_name=link_name,
                 )
             )
