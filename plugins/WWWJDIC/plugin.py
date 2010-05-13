@@ -39,6 +39,10 @@ import urllib2
 from BeautifulSoup import BeautifulSoup, NavigableString
 
 
+def urlencode(string):
+    """Encodes some string as URL-encoded UTF-8."""
+    return urllib.quote(string.encode('utf8'))
+
 class WWWJDIC(callbacks.Plugin):
     """Add the help for "@plugin help WWWJDIC" here
     This should describe *how* to use this plugin."""
@@ -79,19 +83,27 @@ class WWWJDIC(callbacks.Plugin):
         # back out.
         soup = BeautifulSoup(res)
         if not soup.pre:
-            # Nothing found?
-            reply = u"Hmm, nothing found -- but I only look for exact " \
-                "matches and common words.  Try denshi jisho directly: "
+            # Nothing found!  Try again but allow non-P words
+            res = urllib2.urlopen(
+                u"http://www.csse.monash.edu.au/~jwb/cgi-bin/wwwjdic.cgi?1ZUQ"
+                + url_thing
+            )
+            soup = BeautifulSoup(res)
+
+        if not soup.pre:
+            # Still nothing.  Bail.
+            reply = u"Hmm, I can't figure out what that means.  " \
+                "Perhaps try denshi jisho directly: "
 
             jisho_url = u"http://jisho.org/words?jap={jap}&eng={eng}&dict=edict"
             if thing[0] in ('@', '#'):
                 # Prefixes for roomaji
-                reply += jisho_url.format(jap=thing[1:], eng=u'')
+                reply += jisho_url.format(jap=urlencode(thing[1:]), eng=u'')
             # wtf why is any() overridden
             elif filter(lambda c: ord(c) > 256, thing):
-                reply += jisho_url.format(jap=thing, eng=u'')
+                reply += jisho_url.format(jap=urlencode(thing), eng=u'')
             else:
-                reply += jisho_url.format(jap=u'', eng=thing)
+                reply += jisho_url.format(jap=u'', eng=urlencode(thing))
 
             self._reply(irc, reply)
             return
