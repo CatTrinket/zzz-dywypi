@@ -129,28 +129,25 @@ class Pokedex(callbacks.Plugin):
         # If we got here, there's an exact match; hurrah!
         result = results[0]
         obj = result.object
+
+        # Deal with Pokémon form matches
+        if isinstance(obj, tables.PokemonForm):
+            obj = obj.unique_pokemon or obj.form_base_pokemon
+
         if isinstance(obj, tables.Pokemon):
             reply_template = \
                 u"""#{id} {name}, {type}-type Pokémon.  Has {abilities}.  """ \
                 """{stats}.  """ \
                 """http://veekun.com/dex/pokemon/{link_name}"""
 
-            if obj.forme_name:
-                name = '{form} {name}'.format(
-                    form=obj.forme_name.title(),
-                    name=obj.name
-                )
-            else:
-                name = obj.name
-
-            if obj.forme_base_pokemon:
+            if not obj.is_base_form:
                 # Can't use urllib.quote() on the whole thing or it'll
                 # catch "?" and "=" where it shouldn't.
                 # XXX Also we need to pass urllib.quote() things explicitly
                 #     encoded as utf8 or else we get a UnicodeEncodeError.
                 link_name = '{name}?form={form}'.format(
                     name=urllib.quote(obj.name.lower().encode('utf8')),
-                    form=urllib.quote(obj.forme_name.lower().encode('utf8')),
+                    form=urllib.quote(obj.form_name.lower().encode('utf8')),
                 )
             else:
                 link_name = urllib.quote(obj.name.lower().encode('utf8'))
@@ -175,8 +172,8 @@ class Pokedex(callbacks.Plugin):
             stats = """{0} HP, {1}/{2} phys, {3}/{4} spec, {5} speed; {total} total""" \
                 .format(*colored_stats, total=colored_stat_total)
             self._reply(irc, reply_template.format(
-                id=obj.national_id,
-                name=name,
+                id=obj.normal_form.id,
+                name=obj.full_name or obj.name,
                 type='/'.join(_.name for _ in obj.types),
                 abilities=' or '.join(_.name for _ in obj.abilities),
                 stats=stats,
