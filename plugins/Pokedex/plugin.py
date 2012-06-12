@@ -130,9 +130,11 @@ class Pokedex(callbacks.Plugin):
         result = results[0]
         obj = result.object
 
-        # Deal with Pokémon form matches
+        # Deal with Pokémon shenanigans
         if isinstance(obj, tables.PokemonForm):
-            obj = obj.unique_pokemon or obj.form_base_pokemon
+            obj = obj.pokemon
+        elif isinstance(obj, tables.PokemonSpecies):
+            obj = obj.default_pokemon
 
         if isinstance(obj, tables.Pokemon):
             reply_template = \
@@ -140,17 +142,17 @@ class Pokedex(callbacks.Plugin):
                 """{stats}.  """ \
                 """http://veekun.com/dex/pokemon/{link_name}"""
 
-            if not obj.is_base_form:
+            if not obj.is_default:
                 # Can't use urllib.quote() on the whole thing or it'll
                 # catch "?" and "=" where it shouldn't.
                 # XXX Also we need to pass urllib.quote() things explicitly
                 #     encoded as utf8 or else we get a UnicodeEncodeError.
                 link_name = '{name}?form={form}'.format(
-                    name=urllib.quote(obj.name.lower().encode('utf8')),
-                    form=urllib.quote(obj.form_name.lower().encode('utf8')),
+                    name=urllib.quote(obj.species.name.lower().encode('utf8')),
+                    form=urllib.quote(obj.default_form.form_identifier.lower().encode('utf8')),
                 )
             else:
-                link_name = urllib.quote(obj.name.lower().encode('utf8'))
+                link_name = urllib.quote(obj.species.name.lower().encode('utf8'))
 
             # a/b/c/d/e/f sucks.  Put stats in a more readable format.
             # Also, color-code them by good-osity.
@@ -172,8 +174,8 @@ class Pokedex(callbacks.Plugin):
             stats = """{0} HP, {1}/{2} phys, {3}/{4} spec, {5} speed; {total} total""" \
                 .format(*colored_stats, total=colored_stat_total)
             self._reply(irc, reply_template.format(
-                id=obj.normal_form.id,
-                name=obj.full_name or obj.name,
+                id=obj.species.id,
+                name=obj.name,
                 type='/'.join(_.name for _ in obj.types),
                 abilities=' or '.join(_.name for _ in obj.abilities),
                 stats=stats,
@@ -194,7 +196,7 @@ class Pokedex(callbacks.Plugin):
                 power=obj.power,
                 accuracy=obj.accuracy,
                 pp=obj.pp,
-                effect=unicode(obj.short_effect.as_text),
+                effect=unicode(obj.short_effect.as_text()),
                 link_name=urllib.quote(obj.name.lower().encode('utf8')),
                 )
             )
@@ -254,10 +256,18 @@ class Pokedex(callbacks.Plugin):
 
         elif isinstance(obj, tables.Item):
             reply_template = \
-                u"""{name}, an item.  """ \
+                u"""{name}, an item.  {effect}  """ \
                 """http://veekun.com/dex/items/{link_pocket}/{link_name}"""
+
+            effect = obj.short_effect
+            if effect is None:
+                effect = 'No short effect, sorry.  :('
+            else:
+                effect = unicode(effect.as_text())
+
             self._reply(irc, reply_template.format(
                 name=obj.name,
+                effect=effect,
                 link_pocket=urllib.quote(obj.pocket.name.lower().encode('utf8')),
                 link_name=urllib.quote(obj.name.lower().encode('utf8')),
                 )
@@ -269,7 +279,7 @@ class Pokedex(callbacks.Plugin):
                 """http://veekun.com/dex/abilities/{link_name}"""
             self._reply(irc, reply_template.format(
                 name=obj.name,
-                effect=obj.short_effect.as_text,
+                effect=obj.short_effect.as_text(),
                 link_name=urllib.quote(obj.name.lower().encode('utf8')),
                 )
             )
